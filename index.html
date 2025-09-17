@@ -10,6 +10,15 @@
     <div class="container">
         <h1>Trip Expense Splitter ✈️</h1>
 
+        <div class="people-container">
+            <h2>Trip Members 🧑‍🤝‍🧑</h2>
+            <form id="add-person-form">
+                <input type="text" id="person-name" placeholder="Enter a new person's name" required>
+                <button type="submit">Add Person</button>
+            </form>
+            <ul id="people-list"></ul>
+        </div>
+
         <div class="form-container">
             <h2>Add a New Transaction</h2>
             <form id="transaction-form">
@@ -18,11 +27,13 @@
                 
                 <label for="paid-by">Who Paid?</label>
                 <select id="paid-by" required>
-                    <option value="Person 1">Person 1</option>
-                    <option value="Person 2">Person 2</option>
-                    <option value="Person 3">Person 3</option>
-                    <option value="Person 4">Person 4</option>
-                </select>
+                    </select>
+
+                <div class="split-between-container">
+                    <label>Split between:</label>
+                    <div id="split-between-checkboxes">
+                        </div>
+                </div>
                 
                 <button type="submit">Add Transaction</button>
             </form>
@@ -31,7 +42,7 @@
         <div class="summary-container">
             <h2>Summary</h2>
             <div id="summary">
-                <p>Add a transaction to see the summary.</p>
+                <p>Add people and transactions to see the summary.</p>
             </div>
         </div>
 
