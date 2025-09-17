@@ -1,109 +1,117 @@
-// Get elements from the HTML
-const form = document.getElementById('transaction-form');
-const descriptionInput = document.getElementById('description');
-const amountInput = document.getElementById('amount');
-const paidBySelect = document.getElementById('paid-by');
-const transactionList = document.getElementById('transaction-list');
-const summaryDiv = document.getElementById('summary');
-
-// Define the names of the people on the trip
-const people = ['Person 1', 'Person 2', 'Person 3', 'Person 4'];
-
-// Array to store all transaction objects
-let transactions = [];
-
-// Event listener for form submission
-form.addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevent page from reloading
-
-    // Create a new transaction object from the form inputs
-    const newTransaction = {
-        description: descriptionInput.value,
-        amount: parseFloat(amountInput.value),
-        paidBy: paidBySelect.value,
-    };
-
-    // Add the new transaction to our array
-    transactions.push(newTransaction);
-
-    // Update the UI
-    updateUI();
-
-    // Clear the form fields
-    form.reset();
-});
-
-// Function to update the display
-function updateUI() {
-    updateTransactionList();
-    updateSummary();
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
 }
 
-// Function to show the list of transactions
-function updateTransactionList() {
-    transactionList.innerHTML = ''; // Clear the current list
-    transactions.forEach(tx => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            ${tx.description} <span>${tx.paidBy} paid ₹${tx.amount.toFixed(2)}</span>
-        `;
-        transactionList.appendChild(li);
-    });
+.container {
+    width: 100%;
+    max-width: 600px;
+    background: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-// Function to calculate and display who owes whom
-function updateSummary() {
-    if (transactions.length === 0) {
-        summaryDiv.innerHTML = '<p>Add a transaction to see the summary.</p>';
-        return;
-    }
+h1, h2 {
+    text-align: center;
+    color: #2c3e50;
+}
 
-    const totalSpent = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-    const amountPerPerson = totalSpent / people.length;
+.people-container, .form-container, .summary-container, .transactions-container {
+    margin-bottom: 25px;
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    border-radius: 8px;
+}
 
-    const balances = {};
-    people.forEach(person => balances[person] = 0);
+input, select, button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-sizing: border-box; /* Important! */
+    font-size: 1em;
+}
 
-    // Calculate how much each person has paid
-    transactions.forEach(tx => {
-        balances[tx.paidBy] += tx.amount;
-    });
+button {
+    background-color: #3498db;
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
 
-    // Calculate the final balance (paid - share)
-    people.forEach(person => {
-        balances[person] -= amountPerPerson;
-    });
+button:hover {
+    background-color: #2980b9;
+}
 
-    // Separate people who are owed money from those who owe
-    const owedTo = [];
-    const owes = [];
+#people-list {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
 
-    for (const person in balances) {
-        if (balances[person] > 0) {
-            owedTo.push({ name: person, amount: balances[person] });
-        } else if (balances[person] < 0) {
-            owes.push({ name: person, amount: -balances[person] });
-        }
-    }
+#people-list li {
+    background: #e0e0e0;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9em;
+}
 
-    // Generate the summary text
-    let summaryHTML = `
-        <p><strong>Total Spent:</strong> ₹${totalSpent.toFixed(2)}</p>
-        <p><strong>Share per Person:</strong> ₹${amountPerPerson.toFixed(2)}</p>
-        <hr>
-        <h4>Who Owes Whom:</h4>
-    `;
+.split-between-container {
+    margin-top: 15px;
+}
 
-    // Simple display of balances
-    summaryHTML += '<ul>';
-    for (const person in balances) {
-        if (balances[person] > 0) {
-            summaryHTML += `<li>${person} is owed <strong>₹${balances[person].toFixed(2)}</strong></li>`;
-        } else if (balances[person] < 0) {
-            summaryHTML += `<li>${person} owes <strong>₹${(-balances[person]).toFixed(2)}</strong></li>`;
-        }
-    }
-    summaryHTML += '</ul>';
+#split-between-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 5px;
+}
 
-    summaryDiv.innerHTML = summaryHTML;
+#split-between-checkboxes div {
+    display: flex;
+    align-items: center;
+}
+
+#split-between-checkboxes input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+
+#transaction-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#transaction-list li {
+    background: #ecf0f1;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+#summary ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#summary li {
+    background-color: #f9f9f9;
+    padding: 8px;
+    border: 1px solid #eee;
+    margin-bottom: 5px;
+    border-radius: 4px;
 }
