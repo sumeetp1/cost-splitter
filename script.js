@@ -1,117 +1,191 @@
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f4f7f6;
-    color: #333;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
+// Get elements from the HTML
+const form = document.getElementById('transaction-form');
+const descriptionInput = document.getElementById('description');
+const amountInput = document.getElementById('amount');
+const transactionList = document.getElementById('transaction-list');
+const summaryDiv = document.getElementById('summary');
+
+const addPersonForm = document.getElementById('add-person-form');
+const personNameInput = document.getElementById('person-name');
+const peopleList = document.getElementById('people-list');
+const paidBySelect = document.getElementById('paid-by');
+const splitBetweenCheckboxes = document.getElementById('split-between-checkboxes');
+
+// Global state arrays
+let people = [];
+let transactions = [];
+
+// Event listener for the "Add Person" form
+addPersonForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const newPerson = personNameInput.value.trim();
+    if (newPerson && !people.includes(newPerson)) {
+        people.push(newPerson);
+        updatePeopleDisplay();
+        updateUI(); // Recalculate everything when a new person is added
+    }
+    personNameInput.value = '';
+});
+
+// Event listener for the transaction form submission
+form.addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    // Find out who is selected in the checkboxes
+    const selectedPeople = [];
+    const checkboxes = document.querySelectorAll('#split-between-checkboxes input[type="checkbox"]:checked');
+    checkboxes.forEach(cb => {
+        selectedPeople.push(cb.value);
+    });
+
+    if (selectedPeople.length === 0) {
+        alert("Please select at least one person to split the transaction with.");
+        return;
+    }
+    
+    const newTransaction = {
+        description: descriptionInput.value,
+        amount: parseFloat(amountInput.value),
+        paidBy: paidBySelect.value,
+        splitBetween: selectedPeople, // Store the people involved
+    };
+
+    transactions.push(newTransaction);
+    updateUI();
+    form.reset();
+    // Re-check all checkboxes for the next entry
+    document.querySelectorAll('#split-between-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = true);
+});
+
+// Main function to update the entire UI
+function updateUI() {
+    updateTransactionList();
+    updateSummary();
 }
 
-.container {
-    width: 100%;
-    max-width: 600px;
-    background: #fff;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+// Function to update all the places where people's names appear
+function updatePeopleDisplay() {
+    // Update the list of people
+    peopleList.innerHTML = '';
+    people.forEach(person => {
+        const li = document.createElement('li');
+        li.textContent = person;
+        peopleList.appendChild(li);
+    });
+
+    // Update the "Who Paid?" dropdown
+    paidBySelect.innerHTML = '';
+    people.forEach(person => {
+        const option = document.createElement('option');
+        option.value = person;
+        option.textContent = person;
+        paidBySelect.appendChild(option);
+    });
+
+    // Update the "Split between" checkboxes
+    splitBetweenCheckboxes.innerHTML = '';
+    people.forEach(person => {
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.innerHTML = `
+            <input type="checkbox" id="cb-${person}" name="split" value="${person}" checked>
+            <label for="cb-${person}">${person}</label>
+        `;
+        splitBetweenCheckboxes.appendChild(checkboxDiv);
+    });
 }
 
-h1, h2 {
-    text-align: center;
-    color: #2c3e50;
+// Function to show the list of all entered transactions
+function updateTransactionList() {
+    transactionList.innerHTML = ''; // Clear the current list
+    transactions.forEach(tx => {
+        const li = document.createElement('li');
+        const splitText = tx.splitBetween.length === people.length ? 'all' : tx.splitBetween.join(', ');
+        li.innerHTML = `
+            ${tx.description} <span>${tx.paidBy} paid ₹${tx.amount.toFixed(2)} (Split with: ${splitText})</span>
+        `;
+        transactionList.appendChild(li);
+    });
 }
 
-.people-container, .form-container, .summary-container, .transactions-container {
-    margin-bottom: 25px;
-    border: 1px solid #e0e0e0;
-    padding: 20px;
-    border-radius: 8px;
+// Function to calculate and display who owes whom
+function updateSummary() {
+    if (transactions.length === 0 || people.length === 0) {
+        summaryDiv.innerHTML = '<p>Add people and transactions to see the summary.</p>';
+        return;
+    }
+
+    const balances = {};
+    people.forEach(person => balances[person] = 0);
+
+    // Calculate balances from each transaction
+    transactions.forEach(tx => {
+        const amountPerPerson = tx.amount / tx.splitBetween.length;
+        
+        // The person who paid gets credited the full amount
+        balances[tx.paidBy] += tx.amount;
+
+        // The people involved in the split get debited their share
+        tx.splitBetween.forEach(person => {
+            balances[person] -= amountPerPerson;
+        });
+    });
+    
+    const simplifiedDebts = simplifyDebts(balances);
+    let summaryHTML = '<h4>Settled Payments:</h4>';
+    if (simplifiedDebts.length === 0) {
+        summaryHTML += '<p>Everyone is settled up!</p>';
+    } else {
+        summaryHTML += '<ul>';
+        simplifiedDebts.forEach(debt => {
+            summaryHTML += `<li><strong>${debt.from}</strong> pays <strong>${debt.to}</strong> ₹${debt.amount.toFixed(2)}</li>`;
+        });
+        summaryHTML += '</ul>';
+    }
+
+    summaryDiv.innerHTML = summaryHTML;
 }
 
-input, select, button {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    box-sizing: border-box; /* Important! */
-    font-size: 1em;
-}
+// Function to simplify the debt chains
+function simplifyDebts(balances) {
+    const debtors = [];
+    const creditors = [];
 
-button {
-    background-color: #3498db;
-    color: white;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
+    for (const person in balances) {
+        if (balances[person] < -0.01) { // Use a small epsilon for float comparison
+            debtors.push({ name: person, amount: -balances[person] });
+        } else if (balances[person] > 0.01) {
+            creditors.push({ name: person, amount: balances[person] });
+        }
+    }
 
-button:hover {
-    background-color: #2980b9;
-}
+    const payments = [];
 
-#people-list {
-    list-style-type: none;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
+    while (debtors.length > 0 && creditors.length > 0) {
+        debtors.sort((a, b) => a.amount - b.amount);
+        creditors.sort((a, b) => a.amount - b.amount);
 
-#people-list li {
-    background: #e0e0e0;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.9em;
-}
+        const debtor = debtors[debtors.length - 1];
+        const creditor = creditors[creditors.length - 1];
 
-.split-between-container {
-    margin-top: 15px;
-}
+        const paymentAmount = Math.min(debtor.amount, creditor.amount);
 
-#split-between-checkboxes {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
-    margin-top: 5px;
-}
+        payments.push({
+            from: debtor.name,
+            to: creditor.name,
+            amount: paymentAmount,
+        });
 
-#split-between-checkboxes div {
-    display: flex;
-    align-items: center;
-}
+        debtor.amount -= paymentAmount;
+        creditor.amount -= paymentAmount;
 
-#split-between-checkboxes input[type="checkbox"] {
-    width: auto;
-    margin-right: 8px;
-}
+        if (debtor.amount < 0.01) {
+            debtors.pop();
+        }
 
-#transaction-list {
-    list-style-type: none;
-    padding: 0;
-}
+        if (creditor.amount < 0.01) {
+            creditors.pop();
+        }
+    }
 
-#transaction-list li {
-    background: #ecf0f1;
-    padding: 10px;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-}
-
-#summary ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-#summary li {
-    background-color: #f9f9f9;
-    padding: 8px;
-    border: 1px solid #eee;
-    margin-bottom: 5px;
-    border-radius: 4px;
+    return payments;
 }
