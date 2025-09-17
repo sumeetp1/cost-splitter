@@ -22,7 +22,7 @@ h1, h2 {
     color: #2c3e50;
 }
 
-.form-container, .summary-container, .transactions-container {
+.people-container, .form-container, .summary-container, .transactions-container {
     margin-bottom: 25px;
     border: 1px solid #e0e0e0;
     padding: 20px;
@@ -36,6 +36,7 @@ input, select, button {
     border-radius: 5px;
     border: 1px solid #ccc;
     box-sizing: border-box; /* Important! */
+    font-size: 1em;
 }
 
 button {
@@ -51,6 +52,42 @@ button:hover {
     background-color: #2980b9;
 }
 
+#people-list {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#people-list li {
+    background: #e0e0e0;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9em;
+}
+
+.split-between-container {
+    margin-top: 15px;
+}
+
+#split-between-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 5px;
+}
+
+#split-between-checkboxes div {
+    display: flex;
+    align-items: center;
+}
+
+#split-between-checkboxes input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+
 #transaction-list {
     list-style-type: none;
     padding: 0;
@@ -63,9 +100,18 @@ button:hover {
     border-radius: 5px;
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
 }
 
-#summary p {
-    font-size: 1.1em;
-    line-height: 1.6;
+#summary ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#summary li {
+    background-color: #f9f9f9;
+    padding: 8px;
+    border: 1px solid #eee;
+    margin-bottom: 5px;
+    border-radius: 4px;
 }
