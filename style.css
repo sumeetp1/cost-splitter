@@ -115,3 +115,23 @@ button:hover {
     margin-bottom: 5px;
     border-radius: 4px;
 }
+
+/* Add this to your style.css */
+.hidden {
+    display: none;
+}
+
+.trip-selection-container {
+    margin-bottom: 25px;
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fcfcfc;
+}
+
+#current-trip-title {
+    color: #3498db;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
