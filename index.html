@@ -10,54 +10,61 @@
     <div class="container">
         <h1>Trip Expense Splitter ✈️</h1>
 
-        <div class="people-container">
-            <h2>Trip Members 🧑‍🤝‍🧑</h2>
-            <form id="add-person-form">
-                <input type="text" id="person-name" placeholder="Enter a new person's name" required>
-                <button type="submit">Add Person</button>
-            </form>
-            <ul id="people-list"></ul>
-        </div>
-
-        <div class="form-container">
-            <h2>Add a New Transaction</h2>
-            <form id="transaction-form">
-                <input type="text" id="description" placeholder="What was it for?" required>
-                <input type="number" id="amount" placeholder="Amount (₹)" min="0" step="0.01" required>
-                
-                <label for="paid-by">Who Paid?</label>
-                <select id="paid-by" required>
-                    </select>
-
-                <div class="split-between-container">
-                    <label>Split between:</label>
-                    <div id="split-between-checkboxes">
-                        </div>
-                </div>
-                
-                <button type="submit">Add Transaction</button>
+        <div class="trip-selection-container">
+            <h2>Select a Trip</h2>
+            <select id="trip-selector">
+                <option value="">-- Choose a Trip --</option>
+            </select>
+            <hr>
+            <h2>Or, Create a New Trip</h2>
+            <form id="create-trip-form">
+                <input type="text" id="trip-name" placeholder="Enter new trip name (e.g., Goa 2025)" required>
+                <button type="submit">Create Trip</button>
             </form>
         </div>
 
-        <div class="summary-container">
-            <h2>Summary</h2>
-            <div id="summary">
-                <p>Add people and transactions to see the summary.</p>
+        <div id="main-content" class="hidden">
+            <h2 id="current-trip-title"></h2>
+
+            <div class="people-container">
+                <h3>Trip Members 🧑‍🤝‍🧑</h3>
+                <form id="add-person-form">
+                    <input type="text" id="person-name" placeholder="Enter a new person's name" required>
+                    <button type="submit">Add Person</button>
+                </form>
+                <ul id="people-list"></ul>
+            </div>
+
+            <div class="form-container">
+                <h3>Add a New Transaction</h3>
+                <form id="transaction-form">
+                    <input type="text" id="description" placeholder="What was it for?" required>
+                    <input type="number" id="amount" placeholder="Amount (₹)" min="0" step="0.01" required>
+                    <label for="paid-by">Who Paid?</label>
+                    <select id="paid-by" required></select>
+                    <div class="split-between-container">
+                        <label>Split between:</label>
+                        <div id="split-between-checkboxes"></div>
+                    </div>
+                    <button type="submit">Add Transaction</button>
+                </form>
+            </div>
+
+            <div class="summary-container">
+                <h3>Summary</h3>
+                <div id="summary"></div>
+            </div>
+
+            <div class="transactions-container">
+                <h3>All Transactions</h3>
+                <ul id="transaction-list"></ul>
             </div>
         </div>
-
-        <div class="transactions-container">
-            <h2>All Transactions</h2>
-            <ul id="transaction-list">
-                </ul>
-        </div>
     </div>
-<script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
 
-    <script src="script.js"></script>
-</body>
-</html>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    
     <script src="script.js"></script>
 </body>
 </html>
