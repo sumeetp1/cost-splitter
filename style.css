@@ -1,137 +1,87 @@
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f4f7f6;
-    color: #333;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trip Splitter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-container">
+        <h1>Welcome to Trip Splitter</h1>
+        <p>Please sign in to continue</p>
+        <button id="login-btn">Sign in with Google</button>
+    </div>
 
-.container {
-    width: 100%;
-    max-width: 600px;
-    background: #fff;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
+    <div id="app-container" class="hidden">
+        <header class="app-header">
+            <div id="user-info"></div>
+            <button id="logout-btn">Sign Out</button>
+        </header>
 
-h1, h2 {
-    text-align: center;
-    color: #2c3e50;
-}
+        <main class="container">
+            <h1>Trip Expense Splitter ✈️</h1>
 
-.people-container, .form-container, .summary-container, .transactions-container {
-    margin-bottom: 25px;
-    border: 1px solid #e0e0e0;
-    padding: 20px;
-    border-radius: 8px;
-}
+            <div class="card trip-selection-container">
+                <h2>Select or Create a Trip</h2>
+                <select id="trip-selector">
+                    <option value="">-- Choose a Trip --</option>
+                </select>
+                <form id="create-trip-form">
+                    <input type="text" id="trip-name" placeholder="Or, create new trip (e.g., Goa 2025)" required>
+                    <button type="submit">Create Trip</button>
+                </form>
+            </div>
 
-input, select, button {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    box-sizing: border-box; /* Important! */
-    font-size: 1em;
-}
+            <div id="main-content" class="hidden">
+                <h2 id="current-trip-title"></h2>
+                
+                <div class="main-grid">
+                    <div class="card people-container">
+                        <h3>Trip Members 🧑‍🤝‍🧑</h3>
+                        <form id="add-person-form">
+                            <input type="text" id="person-name" placeholder="Enter name and press enter" required>
+                            <button type="submit">Add Person</button>
+                        </form>
+                        <ul id="people-list"></ul>
+                    </div>
+                    
+                    <div class="card form-container">
+                        <h3>Add a New Transaction</h3>
+                        <form id="transaction-form">
+                            <input type="text" id="description" placeholder="What was it for?" required>
+                            <input type="number" id="amount" placeholder="Amount (₹)" min="0" step="0.01" required>
+                            <label for="paid-by">Who Paid?</label>
+                            <select id="paid-by" required></select>
+                            <div class="split-between-container">
+                                <label>Split between:</label>
+                                <div id="split-between-checkboxes"></div>
+                            </div>
+                            <button type="submit">Add Transaction</button>
+                        </form>
+                    </div>
 
-button {
-    background-color: #3498db;
-    color: white;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
+                    <div class="card summary-container grid-col-span-2">
+                        <h3>Summary</h3>
+                        <div id="summary"></div>
+                    </div>
 
-button:hover {
-    background-color: #2980b9;
-}
-
-#people-list {
-    list-style-type: none;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-#people-list li {
-    background: #e0e0e0;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.9em;
-}
-
-.split-between-container {
-    margin-top: 15px;
-}
-
-#split-between-checkboxes {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
-    margin-top: 5px;
-}
-
-#split-between-checkboxes div {
-    display: flex;
-    align-items: center;
-}
-
-#split-between-checkboxes input[type="checkbox"] {
-    width: auto;
-    margin-right: 8px;
-}
-
-#transaction-list {
-    list-style-type: none;
-    padding: 0;
-}
-
-#transaction-list li {
-    background: #ecf0f1;
-    padding: 10px;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-}
-
-#summary ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-#summary li {
-    background-color: #f9f9f9;
-    padding: 8px;
-    border: 1px solid #eee;
-    margin-bottom: 5px;
-    border-radius: 4px;
-}
-
-/* Add this to your style.css */
-.hidden {
-    display: none;
-}
-
-.trip-selection-container {
-    margin-bottom: 25px;
-    border: 1px solid #e0e0e0;
-    padding: 20px;
-    border-radius: 8px;
-    background-color: #fcfcfc;
-}
-
-#current-trip-title {
-    color: #3498db;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-}
+                    <div class="card transactions-container grid-col-span-2">
+                        <h3>All Transactions</h3>
+                        <ul id="transaction-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>
