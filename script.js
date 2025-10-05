@@ -1,8 +1,12 @@
-// ⬇️ PASTE YOUR FIREBASE CONFIG OBJECT HERE ⬇️
 const firebaseConfig = {
-    // ... your config
+  apiKey: "AIzaSyBD2QecoCI9R6-6SHs-K_5vwKQvKriQEH0",
+  authDomain: "trip-cost-splitter.firebaseapp.com",
+  projectId: "trip-cost-splitter",
+  storageBucket: "trip-cost-splitter.firebasestorage.app",
+  messagingSenderId: "99530590172",
+  appId: "1:99530590172:web:9a085f6256edddfbaf7119",
+  measurementId: "G-DMVVZD6DFD"
 };
-// ⬆️ PASTE YOUR FIREBASE CONFIG OBJECT HERE ⬆️
 
 // --- INITIALIZE FIREBASE SERVICES ---
 firebase.initializeApp(firebaseConfig);
