@@ -69,9 +69,14 @@ function initializeAppLogic() {
     let unsubscribeTransactions = null;
     
     // --- CORE TRIP LOGIC ---
-    db.collection('trips').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+  const user = auth.currentUser; // Get the user once at the top of the function
+if (user) {
+    db.collection('trips')
+      .where('memberUIDs', 'array-contains', user.uid) // <-- ADD THIS LINE
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(snapshot => {
         const selectedValue = tripSelector.value;
-        tripSelector.innerHTML = '<option value="">-- Choose a Trip --</option>';
+        tripSelector.innerHTML = '<option value="">-- Choose a Trip --</option>'; // Reset
         snapshot.forEach(doc => {
             const trip = doc.data();
             const option = document.createElement('option');
@@ -81,15 +86,23 @@ function initializeAppLogic() {
         });
         tripSelector.value = selectedValue;
     });
+}
+ createTripForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const tripName = tripNameInput.value.trim();
+    const user = auth.currentUser; // Get the currently logged-in user
 
-    createTripForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const tripName = tripNameInput.value.trim();
-        if (tripName) {
-            db.collection('trips').add({ name: tripName, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            tripNameInput.value = '';
-        }
-    });
+    if (tripName && user) {
+        db.collection('trips').add({
+            name: tripName,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            creatorId: user.uid, // Store who created it
+            memberUIDs: [user.uid] // Create the members list with the creator
+        });
+        tripNameInput.value = '';
+    }
+});
+
 
     tripSelector.addEventListener('change', () => {
         currentTripId = tripSelector.value;
