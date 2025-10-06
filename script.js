@@ -223,4 +223,50 @@ function initializeAppLogic() {
         }
 
         const balances = {};
-        people.
+        people.forEach(person => balances[person] = 0);
+
+        transactions.forEach(tx => {
+            const amountPerPerson = tx.amount / tx.splitBetween.length;
+            if (balances[tx.paidBy] !== undefined) balances[tx.paidBy] += tx.amount;
+            tx.splitBetween.forEach(person => {
+                if (balances[person] !== undefined) balances[person] -= amountPerPerson;
+            });
+        });
+
+        const simplifiedDebts = simplifyDebts(balances);
+        let summaryHTML = '<h4>Settled Payments:</h4>';
+        if (simplifiedDebts.length === 0) {
+            summaryHTML += '<p>Everyone is settled up!</p>';
+        } else {
+            summaryHTML += '<ul>';
+            simplifiedDebts.forEach(debt => {
+                summaryHTML += `<li><strong>${debt.from}</strong> pays <strong>${debt.to}</strong> ₹${debt.amount.toFixed(2)}</li>`;
+            });
+            summaryHTML += '</ul>';
+        }
+        summaryDiv.innerHTML = summaryHTML;
+    }
+
+    function simplifyDebts(balances) {
+        const debtors = [];
+        const creditors = [];
+        for (const person in balances) {
+            if (balances[person] < -0.01) debtors.push({ name: person, amount: -balances[person] });
+            else if (balances[person] > 0.01) creditors.push({ name: person, amount: balances[person] });
+        }
+        const payments = [];
+        while (debtors.length > 0 && creditors.length > 0) {
+            debtors.sort((a, b) => a.amount - b.amount);
+            creditors.sort((a, b) => a.amount - b.amount);
+            const debtor = debtors[debtors.length - 1];
+            const creditor = creditors[creditors.length - 1];
+            const paymentAmount = Math.min(debtor.amount, creditor.amount);
+            payments.push({ from: debtor.name, to: creditor.name, amount: paymentAmount });
+            debtor.amount -= paymentAmount;
+            creditor.amount -= paymentAmount;
+            if (debtor.amount < 0.01) debtors.pop();
+            if (creditor.amount < 0.01) creditors.pop();
+        }
+        return payments;
+    }
+}
