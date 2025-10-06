@@ -11,7 +11,7 @@ const firebaseConfig = {
 // --- INITIALIZE FIREBASE SERVICES ---
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth();
+const auth = firebase.auth(); // Initialize Firebase Auth
 
 // --- GET HTML ELEMENTS (GLOBAL) ---
 const loginContainer = document.getElementById('login-container');
@@ -21,33 +21,47 @@ const logoutBtn = document.getElementById('logout-btn');
 const userInfo = document.getElementById('user-info');
 
 // --- AUTHENTICATION LOGIC ---
+
+// Central listener for authentication state changes
 auth.onAuthStateChanged(user => {
     if (user) {
+        // User is signed in
         loginContainer.classList.add('hidden');
         appContainer.classList.remove('hidden');
         userInfo.textContent = `Signed in as ${user.displayName}`;
+        
+        // Now that the user is logged in, initialize all the app's functionality
         initializeAppLogic();
+
     } else {
+        // User is signed out
         loginContainer.classList.remove('hidden');
         appContainer.classList.add('hidden');
         userInfo.textContent = '';
     }
 });
+
+// Sign-in function
 loginBtn.addEventListener('click', () => {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider);
 });
-logoutBtn.addEventListener('click', () => { auth.signOut(); });
+
+// Sign-out function
+logoutBtn.addEventListener('click', () => {
+    auth.signOut();
+});
 
 
 // --- APPLICATION LOGIC (WRAPPED IN A FUNCTION) ---
+// This function contains ALL the logic for the main app.
+// It is only called AFTER a user successfully logs in.
 function initializeAppLogic() {
     
     // --- GET HTML ELEMENTS (APP-SPECIFIC) ---
     const createTripForm = document.getElementById('create-trip-form');
     const tripNameInput = document.getElementById('trip-name');
     const tripSelector = document.getElementById('trip-selector');
-    const deleteTripBtn = document.getElementById('delete-trip-btn');
     const mainContent = document.getElementById('main-content');
     const currentTripTitle = document.getElementById('current-trip-title');
     const addPersonForm = document.getElementById('add-person-form');
@@ -69,12 +83,7 @@ function initializeAppLogic() {
     let unsubscribeTransactions = null;
     
     // --- CORE TRIP LOGIC ---
-  const user = auth.currentUser; // Get the user once at the top of the function
-if (user) {
-    db.collection('trips')
-      .where('memberUIDs', 'array-contains', user.uid) // <-- ADD THIS LINE
-      .orderBy('createdAt', 'desc')
-      .onSnapshot(snapshot => {
+    db.collection('trips').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         const selectedValue = tripSelector.value;
         tripSelector.innerHTML = '<option value="">-- Choose a Trip --</option>'; // Reset
         snapshot.forEach(doc => {
@@ -84,25 +93,21 @@ if (user) {
             option.textContent = trip.name;
             tripSelector.appendChild(option);
         });
-        tripSelector.value = selectedValue;
+        tripSelector.value = selectedValue; // Re-select the trip if it still exists
     });
-}
- createTripForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const tripName = tripNameInput.value.trim();
-    const user = auth.currentUser; // Get the currently logged-in user
 
-    if (tripName && user) {
-        db.collection('trips').add({
-            name: tripName,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            creatorId: user.uid, // Store who created it
-            memberUIDs: [user.uid] // Create the members list with the creator
-        });
-        tripNameInput.value = '';
-    }
-});
-
+    createTripForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const tripName = tripNameInput.value.trim();
+        if (tripName) {
+            // This is the simpler version without memberUIDs
+            db.collection('trips').add({
+                name: tripName,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            tripNameInput.value = '';
+        }
+    });
 
     tripSelector.addEventListener('change', () => {
         currentTripId = tripSelector.value;
@@ -111,13 +116,11 @@ if (user) {
 
         if (currentTripId) {
             mainContent.classList.remove('hidden');
-            deleteTripBtn.classList.remove('hidden');
             const selectedTripName = tripSelector.options[tripSelector.selectedIndex].text;
             currentTripTitle.textContent = `Managing Trip: ${selectedTripName}`;
             listenForTripData();
         } else {
             mainContent.classList.add('hidden');
-            deleteTripBtn.classList.add('hidden');
         }
     });
     
@@ -127,7 +130,7 @@ if (user) {
         const peopleRef = db.collection('trips').doc(currentTripId).collection('people');
         unsubscribePeople = peopleRef.onSnapshot(snapshot => {
             people = [];
-            snapshot.forEach(doc => people.push({ id: doc.id, name: doc.data().name }));
+            snapshot.forEach(doc => people.push(doc.data().name));
             updatePeopleDisplay();
             updateUI();
         });
@@ -135,17 +138,16 @@ if (user) {
         const transRef = db.collection('trips').doc(currentTripId).collection('transactions');
         unsubscribeTransactions = transRef.onSnapshot(snapshot => {
             transactions = [];
-            snapshot.forEach(doc => transactions.push({ id: doc.id, ...doc.data() }));
+            snapshot.forEach(doc => transactions.push(doc.data()));
             updateUI();
         });
     }
 
     addPersonForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const newPersonName = personNameInput.value.trim();
-        const personExists = people.some(p => p.name.toLowerCase() === newPersonName.toLowerCase());
-        if (newPersonName && !personExists && currentTripId) {
-            db.collection('trips').doc(currentTripId).collection('people').add({ name: newPersonName });
+        const newPerson = personNameInput.value.trim();
+        if (newPerson && !people.includes(newPerson) && currentTripId) {
+            db.collection('trips').doc(currentTripId).collection('people').add({ name: newPerson });
         }
         personNameInput.value = '';
     });
@@ -173,75 +175,28 @@ if (user) {
         document.querySelectorAll('#split-between-checkboxes input').forEach(cb => cb.checked = true);
     });
 
-    // --- DELETE FUNCTIONALITY ---
-    peopleList.addEventListener('click', (e) => {
-        if (e.target.closest('.delete-btn')) {
-            const personId = e.target.closest('.delete-btn').dataset.id;
-            const personToDelete = people.find(p => p.id === personId);
-            if (confirm(`Are you sure you want to delete ${personToDelete.name}? This cannot be undone.`)) {
-                db.collection('trips').doc(currentTripId).collection('people').doc(personId).delete();
-            }
-        }
-    });
-    
-    transactionList.addEventListener('click', (e) => {
-        if (e.target.closest('.delete-btn')) {
-            const transactionId = e.target.closest('.delete-btn').dataset.id;
-            if (confirm(`Are you sure you want to delete this transaction? This cannot be undone.`)) {
-                db.collection('trips').doc(currentTripId).collection('transactions').doc(transactionId).delete();
-            }
-        }
-    });
-
-    deleteTripBtn.addEventListener('click', async () => {
-        if (!currentTripId) return;
-        const tripName = tripSelector.options[tripSelector.selectedIndex].text;
-
-        if (confirm(`ARE YOU ABSOLUTELY SURE?\nThis will permanently delete the trip "${tripName}" and all of its members and transactions. This action cannot be undone.`)) {
-            const tripRef = db.collection('trips').doc(currentTripId);
-            
-            const peopleSnapshot = await tripRef.collection('people').get();
-            peopleSnapshot.forEach(doc => doc.ref.delete());
-
-            const transactionsSnapshot = await tripRef.collection('transactions').get();
-            transactionsSnapshot.forEach(doc => doc.ref.delete());
-
-            await tripRef.delete();
-            alert(`Trip "${tripName}" has been deleted.`);
-        }
-    });
-
     // --- UI AND CALCULATION FUNCTIONS ---
     function updateUI() {
         updateTransactionList();
         updateSummary();
     }
 
-    // THIS FUNCTION IS NOW FULLY CORRECTED
     function updatePeopleDisplay() {
-        people.sort((a, b) => a.name.localeCompare(b.name));
+        people.sort();
         peopleList.innerHTML = '';
         paidBySelect.innerHTML = '';
         splitBetweenCheckboxes.innerHTML = '';
 
         people.forEach(person => {
-            // Update list of people with delete button
             const li = document.createElement('li');
-            li.innerHTML = `
-                <span>${person.name}</span>
-                <button class="delete-btn" data-id="${person.id}">&times;</button>
-            `;
+            li.textContent = person;
             peopleList.appendChild(li);
-
-            // CORRECTED: Update 'paid by' dropdown
             const option = document.createElement('option');
-            option.value = person.name; // Use person.name
-            option.textContent = person.name; // Use person.name
+            option.value = person;
+            option.textContent = person;
             paidBySelect.appendChild(option);
-
-            // CORRECTED: Update 'split between' checkboxes
             const checkboxDiv = document.createElement('div');
-            checkboxDiv.innerHTML = `<input type="checkbox" id="cb-${person.name}" name="split" value="${person.name}" checked><label for="cb-${person.name}">${person.name}</label>`;
+            checkboxDiv.innerHTML = `<input type="checkbox" id="cb-${person}" name="split" value="${person}" checked><label for="cb-${person}">${person}</label>`;
             splitBetweenCheckboxes.appendChild(checkboxDiv);
         });
     }
@@ -252,10 +207,7 @@ if (user) {
         transactions.forEach(tx => {
             const li = document.createElement('li');
             const splitText = tx.splitBetween.length === people.length ? 'everyone' : tx.splitBetween.join(', ');
-            li.innerHTML = `
-                <span>${tx.description} - ${tx.paidBy} paid ₹${tx.amount.toFixed(2)} (Split with: ${splitText})</span>
-                <button class="delete-btn" data-id="${tx.id}">&times;</button>
-            `;
+            li.innerHTML = `${tx.description} <span>${tx.paidBy} paid ₹${tx.amount.toFixed(2)} (Split with: ${splitText})</span>`;
             transactionList.appendChild(li);
         });
     }
@@ -271,51 +223,4 @@ if (user) {
         }
 
         const balances = {};
-        const peopleNames = people.map(p => p.name);
-        peopleNames.forEach(name => balances[name] = 0);
-
-        transactions.forEach(tx => {
-            const amountPerPerson = tx.amount / tx.splitBetween.length;
-            if (balances[tx.paidBy] !== undefined) balances[tx.paidBy] += tx.amount;
-            tx.splitBetween.forEach(personName => {
-                if (balances[personName] !== undefined) balances[personName] -= amountPerPerson;
-            });
-        });
-        
-        const simplifiedDebts = simplifyDebts(balances);
-        let summaryHTML = '<h4>Settled Payments:</h4>';
-        if (simplifiedDebts.length === 0) {
-            summaryHTML += '<p>Everyone is settled up!</p>';
-        } else {
-            summaryHTML += '<ul>';
-            simplifiedDebts.forEach(debt => {
-                summaryHTML += `<li><strong>${debt.from}</strong> pays <strong>${debt.to}</strong> ₹${debt.amount.toFixed(2)}</li>`;
-            });
-            summaryHTML += '</ul>';
-        }
-        summaryDiv.innerHTML = summaryHTML;
-    }
-
-    function simplifyDebts(balances) {
-        const debtors = [];
-        const creditors = [];
-        for (const person in balances) {
-            if (balances[person] < -0.01) debtors.push({ name: person, amount: -balances[person] });
-            else if (balances[person] > 0.01) creditors.push({ name: person, amount: balances[person] });
-        }
-        const payments = [];
-        while (debtors.length > 0 && creditors.length > 0) {
-            debtors.sort((a, b) => a.amount - b.amount);
-            creditors.sort((a, b) => a.amount - b.amount);
-            const debtor = debtors[debtors.length - 1];
-            const creditor = creditors[creditors.length - 1];
-            const paymentAmount = Math.min(debtor.amount, creditor.amount);
-            payments.push({ from: debtor.name, to: creditor.name, amount: paymentAmount });
-            debtor.amount -= paymentAmount;
-            creditor.amount -= paymentAmount;
-            if (debtor.amount < 0.01) debtors.pop();
-            if (creditor.amount < 0.01) creditors.pop();
-        }
-        return payments;
-    }
-}
+        people.
